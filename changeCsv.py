@@ -41,9 +41,9 @@ with open("./Csv/data.csv", 'rb') as file:
                 description = arr[2] + "," + arr[3]
             elif length == 10:
                 description = arr[2] + "," + arr[3] + "," + arr[4]
-            newLine = invoiceNo + ";" + stockCode + ";" + description.strip() + ";" + arr[length - 5].strip() + ";" + arr[length - 4].strip() + ";" + arr[length - 3].strip() + ";" + userId + ";" + countryCode + "\n"
+            newLine = invoiceNo + ";" + stockCode + ";" + description.strip().replace('"', "") + ";" + arr[length - 5].strip() + ";" + arr[length - 4].strip() + ";" + arr[length - 3].strip() + ";" + userId + ";" + countryCode + "\n"
             newFile.write(newLine)
-            products.add((stockCode, description, arr[length - 3], arr[length - 4].split(" ")[0]))
+            products.add((stockCode, description, arr[length - 3], arr[length - 4].split(" ")[0].strip()))
             # print(arr)
         header = False
 
