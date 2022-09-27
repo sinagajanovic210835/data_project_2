@@ -1,9 +1,9 @@
 import random
 from faker import Faker
 
-countriesWithCode = {}
 userIds = set()
-products = set()
+countriesWithCode = {}
+products = {}
 invoiceNoWithCountryCodes = {}
 
 with open("Csv/country.csv") as file:
@@ -15,8 +15,8 @@ with open("Csv/country.csv") as file:
 # Change field Country from country name to country code and add random region value from 1 - 6,
 # extract user ids and products ids with prices and dates and write to a new file
 
-newFile = open("./Csv/data1.csv", "w")
-newFile.write("InvoiceNo;StockCode;Description;Quantity;InvoiceDate;UnitPrice;CustomerID;Country\n")
+newFile = open("./Csv/invoices.csv", "w")
+newFile.write("InvoiceNo;StockCode;Quantity;InvoiceDate;CustomerID;Country\n")
 header = True
 
 with open("./Csv/data.csv", 'rb') as file:
@@ -27,11 +27,14 @@ with open("./Csv/data.csv", 'rb') as file:
             length = len(arr)
             country = arr[length - 1].strip()
             userId = arr[length - 2].strip()
-            if userId:
-                userIds.add(userId)
+            if userId.strip():
+                userIds.add(userId.strip())
             invoiceNo = arr[0].strip()
             stockCode = arr[1].strip()
-            countryCode = countriesWithCode[country] + "-" + str(random.randint(1, 6))
+            if country == "Channel Islands":
+                countryCode = "1010-6"
+            else:
+                countryCode = countriesWithCode[country] + "-" + str(random.randint(1, 6))
             if invoiceNo in invoiceNoWithCountryCodes.keys():
                 countryCode = invoiceNoWithCountryCodes[invoiceNo]
             else:
@@ -41,12 +44,13 @@ with open("./Csv/data.csv", 'rb') as file:
                 description = arr[2] + "," + arr[3]
             elif length == 10:
                 description = arr[2] + "," + arr[3] + "," + arr[4]
-            newLine = invoiceNo + ";" + stockCode + ";" + description.strip().replace('"', "") + ";" + arr[length - 5].strip() + ";" + arr[length - 4].strip() + ";" + arr[length - 3].strip() + ";" + userId + ";" + countryCode + "\n"
+            newLine = invoiceNo + ";" + stockCode + ";" + arr[length - 5].strip() + ";" + arr[length - 4].strip() + ";" + userId + ";" + countryCode + "\n"
             newFile.write(newLine)
-            products.add((stockCode, description, arr[length - 3], arr[length - 4].split(" ")[0].strip()))
+            date = arr[length - 4].split(" ")[0].strip()
+            if not (stockCode, date) in products.keys():
+                products[(stockCode, date)] = (description.strip(), arr[length - 3].strip())
             # print(arr)
         header = False
-
 
 file.close()
 newFile.close()
@@ -65,10 +69,8 @@ users.close()
 
 prodfile = open("./Csv/products.csv", "w")
 prodfile.write("StockCode;Description;UnitPrice;Date\n")
-for prod in products:
-    line = ""
-    for field in prod:
-        line = line + field + ";"
-    line = line[:-1] + "\n"
+for (code, date) in products.keys():
+    (desc, price) = products[(code, date)]
+    line = code + ";" + desc + ";" + price + ";" + date + "\n"
     prodfile.write(line)
 prodfile.close()
