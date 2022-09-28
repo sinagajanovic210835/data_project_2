@@ -6,7 +6,7 @@ countriesWithCode = {}
 products = {}
 invoiceNoWithCountryCodes = {}
 
-with open("Csv/country.csv") as file:
+with open("Csv/country/country.csv") as file:
     for line in file:
         if line.strip():
             (val, key) = line.strip().split(";")
@@ -15,11 +15,11 @@ with open("Csv/country.csv") as file:
 # Change field Country from country name to country code and add random region value from 1 - 6,
 # extract user ids and products ids with prices and dates and write to a new file
 
-newFile = open("./Csv/invoices.csv", "w")
+newFile = open("./Csv/invoices/invoices.csv", "w")
 newFile.write("InvoiceNo;StockCode;Quantity;InvoiceDate;CustomerID;Country\n")
 header = True
 
-with open("./Csv/data.csv", 'rb') as file:
+with open("./Csv/data/data.csv", 'rb') as file:
     for line1 in file:
         line = line1.decode(errors='ignore')
         if line.strip() and not header:
@@ -58,7 +58,7 @@ fake = Faker()
 
 # Write extracted user ids with generated random names into file
 
-users = open("./Csv/users.csv", "w")
+users = open("./Csv/users/users.csv", "w")
 users.write("id;name\n")
 for user in userIds:
     userName = fake.name()
@@ -67,7 +67,7 @@ users.close()
 
 # write products into file
 
-prodfile = open("./Csv/products.csv", "w")
+prodfile = open("./Csv/products/products.csv", "w")
 prodfile.write("StockCode;Description;UnitPrice;Date\n")
 for (code, date) in products.keys():
     (desc, price) = products[(code, date)]

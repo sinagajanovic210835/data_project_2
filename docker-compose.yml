@@ -1,0 +1,121 @@
+version: "3"
+
+services:
+
+  nifi:
+    image: apache/nifi:1.15.3
+    container_name: nifi
+    ports:
+      - 8443:8443
+    volumes:
+      - ./corehdfs:/tmp/corehdfs/
+      - ./Csv/:/tmp/csv/      
+      - nifi_conf:/opt/nifi/nifi-current/conf
+      - nifi_database_repository:/opt/nifi/nifi-current/database_repository
+      - nifi_flowfile_repository:/opt/nifi/nifi-current/flowfile_repository        
+      - nifi_content_repository:/opt/nifi/nifi-current/content_repository
+      - nifi_provenance_repository:/opt/nifi/nifi-current/provenance_repository
+      - nifi_state:/opt/nifi/nifi-current/state
+      
+    environment:
+      - SINGLE_USER_CREDENTIALS_USERNAME=admin
+      - SINGLE_USER_CREDENTIALS_PASSWORD=nifi123admin
+      - BEARER_TOKEN="AAAAAAAAAAAAAAAAAAAAADMQeAEAAAAARHrZlURhDY49gYvrUJK5OlGUsLY%3DXuF1AUPEzyeZl4LMfNJuugJaPOdSKgN4yqrsapnjvH63PLQKx0"
+            
+  nifi-registry:      
+    image: apache/nifi-registry:1.15.3
+    container_name: nifi-registry
+    ports:
+      - 18080:18080
+    volumes:
+      - nifi_registry:/opt/nifi-registry/nifi-registry-current/
+
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: namenode
+    volumes:
+      - ./namenode:/hadoop/dfs/name
+    environment:
+      - CLUSTER_NAME=test
+    env_file:
+      - ./hadoop-hive.env
+    ports:
+      - 9870:9870
+      - 9000:9000
+
+  datanode1:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode1
+    volumes:
+      - ./datanode1:/hadoop/dfs/data
+    env_file:
+      - ./hadoop-hive.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+
+  datanode2:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode2
+    volumes:
+      - ./datanode2:/hadoop/dfs/data
+    env_file:
+      - ./hadoop-hive.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+
+  datanode3:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode3
+    volumes:
+      - ./datanode3:/hadoop/dfs/data
+    env_file:
+      - ./hadoop-hive.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+
+  hive-server:
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    container_name: hive-server
+    env_file:
+      - ./hadoop-hive.env
+    environment:
+      HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://hive-metastore/metastore"
+      SERVICE_PRECONDITION: "hive-metastore:9083"
+    ports:
+      - "10000:10000"
+  
+  hive-metastore:
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    container_name: hive-metastore
+    env_file:
+      - ./hadoop-hive.env
+    command: /opt/hive/bin/hive --service metastore
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864 hive-metastore-postgresql:5432"
+    ports:
+      - "9083:9083"
+  
+  hive-metastore-postgresql:
+    image: bde2020/hive-metastore-postgresql:2.3.0
+    container_name: hive-metastore-postgresql
+
+  cloudera:
+    image: gethue/hue:20201111-135001
+    container_name: hue
+    dns: 8.8.8.8
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./conf.dist:/usr/share/hue/desktop/conf
+    depends_on: 
+      - hive-server
+  
+volumes:
+  nifi_conf: {}
+  nifi_database_repository: {}
+  nifi_flowfile_repository: {}
+  nifi_content_repository: {}
+  nifi_provenance_repository: {}
+  nifi_state: {}
+  nifi_registry: {}
+  
