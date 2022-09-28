@@ -1,12 +1,9 @@
-from time import time, ctime, struct_time
-import calendar
-
 cntrFile = open("../Csv/country/country.csv", "r")
 cntrFile.close()
 prodFile = open("../Csv/country/country.csv", "r")
 prodFile.close()
-countriesWithCode = {}
 
+countriesWithCode = {}
 with open("../Csv/country/country.csv") as file:
     for line in file:
         if line.strip():
@@ -25,6 +22,8 @@ products = set()
 newFile = open("../Csv/country/country.csv", "r")
 newFile.close()
 
+# Write invoices in smaller files, hourly separated, etc. all invoices on same date between 8:00 - 9:00 hours
+
 with open("../Csv/invoices/invoices.csv") as invoices:
     for line in invoices:
         if line.strip() and not header:
@@ -36,10 +35,10 @@ with open("../Csv/invoices/invoices.csv") as invoices:
             yr = int(dt.split("/")[2])
             hr = int(tm.split(":")[0])
             minut = int(tm.split(":")[1])
-            countries.add(arr[-1], countriesWithCode[arr[-1]])
+            countr = arr[-1].split("-")[0]
+            countries.add((arr[-1], countriesWithCode[countr]))
             if first:
-                startDay = day
-                cnt += 1
+                cnt += 1                
                 newFile.close()
                 start = hr
                 name = "../Csv/invoicesByHour/" + str(cnt) + "--" + str(start) + ":00-" + str(start + 1) + ":00--" + str(day)  + "-" + str(mnth) + "-" + str(yr) + ".csv"
@@ -54,22 +53,6 @@ with open("../Csv/invoices/invoices.csv") as invoices:
         header = False
     invoices.close()
 
-# print("**************************************")
-# t = time()
-# print(t)
-# t1 = struct_time((2010, 1, 12, 8,26,0,0,0,0))
 
-# print(t1)
-# t11 = calendar.timegm(t1)
-# print(t11)
-# t3 = ctime(t11)
-# print(t3)
-
-#  6,12/1/2010 8:26      
-# with open("Csv/country/country.csv") as countries:
-#     for line in file:        
-
-# with open("Csv/products/products.csv") as products:
-#     for line in file:
       
 
