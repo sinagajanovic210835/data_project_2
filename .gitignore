@@ -1,3 +1,6 @@
 sina.txt
 Csv/invoicesByHour
-Csv/invoicesByHour/*
+Csv/countriesByDay/
+Csv/productsByDay/
+test.sh
+beeline.txt
