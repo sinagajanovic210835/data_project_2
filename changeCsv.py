@@ -16,7 +16,7 @@ with open("Csv/country/country.csv") as file:
 # extract user ids and products ids with prices and dates and write to a new file
 
 newFile = open("./Csv/invoices/invoices.csv", "w")
-newFile.write("InvoiceNo;StockCode;Quantity;InvoiceDate;CustomerID;Country\n")
+newFile.write("InvoiceNo|StockCode|Quantity|InvoiceDate|CustomerID|Country\n")
 header = True
 
 with open("./Csv/data/data.csv", 'rb') as file:
@@ -44,7 +44,7 @@ with open("./Csv/data/data.csv", 'rb') as file:
                 description = arr[2] + "," + arr[3]
             elif length == 10:
                 description = arr[2] + "," + arr[3] + "," + arr[4]
-            newLine = invoiceNo + ";" + stockCode + ";" + arr[length - 5].strip() + ";" + arr[length - 4].strip() + ";" + userId + ";" + countryCode + "\n"
+            newLine = invoiceNo + "|" + stockCode + "|" + arr[length - 5].strip() + "|" + arr[length - 4].strip() + "|" + userId + "|" + countryCode + "\n"
             newFile.write(newLine)
             date = arr[length - 4].split(" ")[0].strip()
             if not (stockCode, date) in products.keys():
@@ -59,18 +59,18 @@ fake = Faker()
 # Write extracted user ids with generated random names into file
 
 users = open("./Csv/users/users.csv", "w")
-users.write("id;name\n")
+users.write("id|name\n")
 for user in userIds:
     userName = fake.name()
-    users.write(user + ";" + userName + "\n")
+    users.write(user + "|" + userName + "\n")
 users.close()
 
 # write products into file
 
 prodfile = open("./Csv/products/products.csv", "w")
-prodfile.write("StockCode;Description;UnitPrice;Date\n")
+prodfile.write("StockCode|Description|UnitPrice|Date\n")
 for (code, date) in products.keys():
     (desc, price) = products[(code, date)]
-    line = code + ";" + desc + ";" + price + ";" + date + "\n"
+    line = code + "|" + desc + "|" + price + "|" + date + "\n"
     prodfile.write(line)
 prodfile.close()
