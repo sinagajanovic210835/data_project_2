@@ -7,8 +7,11 @@ services:
     container_name: namenode
     volumes:
       - namenode:/hadoop/dfs/name
-      - ./namenodedata:/data1/shells
+      - ./bool:/bool
+      - ./namenodedata:/shells
       - ./Csv/invoicesByHour:/data1/invoices
+      - ./Csv/productsByDay:/data1/products
+      - ./Csv/countriesByDay:/data1/countries
       - ./crontabs:/crontabs
     environment:
       - CLUSTER_NAME=test
@@ -98,13 +101,12 @@ services:
       - 8043:8042     
     environment:
       - PYSPARK_PYTHON=python3
-      # - NMB=1
     env_file:
       - ./hadoop-hive.env
-    volumes:   
+    volumes:
+      - ./bool:/bool   
       - ./crontabs:/crontabs  
-      - ./shell:/shell/
-      - ./spark:/sparkapp/
+      - ./sparkdata:/sparkapp/
     #   - ./driver/:/driver/
 
   spark-worker1:

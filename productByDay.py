@@ -16,7 +16,7 @@ with open("./Csv/products/products.csv") as file:
                 cnt += 1   
                 tmpDate = date             
                 newDate = False                
-                name = "./Csv/productsByDay/" + str(cnt) + "__" + tmpDate + ".csv"
+                name = "./Csv/productsByDay/" + tmpDate + ".csv"
                 newFile = open(name, "w")
                 newFile.write("StockCode|Description|UnitPrice|Date\n")
                 newFile.write(line1)

@@ -4,10 +4,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql._
 import java.io.File
 
-import java.sql.DriverManager
-import java.time.LocalDateTime
-
-object Project2 {
+object SaveInvoices {
 
 def run():Unit = {
   
@@ -20,7 +17,7 @@ val nmb = sc.getConf.get("spark.driver.args")(0)
     Seq(
       StructField("InvoiceNo", StringType, true),
       StructField("StockCode", StringType, true),
-      StructField("Quantity", StringType, true),
+      StructField("Quantity", IntegerType, true),
       StructField("InvoiceDate", StringType, true),
       StructField("CustomerID", StringType, true),
       StructField("Country", StringType, true)
@@ -28,7 +25,7 @@ val nmb = sc.getConf.get("spark.driver.args")(0)
     
 val warehouseLocation = new File("spark-warehouse").getAbsolutePath
 
- val spark =
+  val spark =
     SparkSession
       .builder()
       .appName("FeatureExtractor")
@@ -45,9 +42,9 @@ val warehouseLocation = new File("spark-warehouse").getAbsolutePath
   print(invoices.count())
   invoices.show(100)
   invoices.printSchema()
+    
+  invoices.write.mode(SaveMode.Append).saveAsTable("invoices")
+}
+}
 
-  
-  invoices.write.mode(SaveMode.Append).saveAsTable("table3")
-}
-}
-Project2.run()
+SaveInvoices.run()
