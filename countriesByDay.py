@@ -33,8 +33,7 @@ with open("./Csv/invoices/invoices.csv") as file:
             else:
                 if len(codesToWrite) > 0:
                     name = "./Csv/countriesByDay/" + tmpDate + ".csv"
-                    newFile = open(name, "w")
-                    newFile.write("country_code|country_name\n")
+                    newFile = open(name, "w")                    
                     for ccd in codesToWrite:
                         newFile.write(ccd + "|" + countriesWithCode[ccd] + "\n")
                     newFile.close

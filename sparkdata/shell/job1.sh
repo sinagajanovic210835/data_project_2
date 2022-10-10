@@ -1,13 +1,15 @@
 #! /bin/bash
 
 source /etc/environment && \
-BOL=`cat /bool/bool.txt`
+
 if [[ $CNT != "" ]]
 then
-    sleep 20
-    /spark/bin/spark-shell -I /sparkapp/first.scala --conf spark.driver.args="$CNT"
+    sleep 20    
+    BOOL=`cat /bool/bool.txt`
+    /spark/bin/spark-shell -I /sparkapp/first.scala --conf spark.driver.args="$CNT $BOOL" && \
+    echo false > /bool/bool.txt
+    CNT=$((CNT + 1))        
 else
-    CNT=0   
+    CNT=1  
 fi
-CNT=$((CNT + 1))
 echo CNT=$CNT > /etc/environment

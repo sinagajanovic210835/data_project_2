@@ -4,3 +4,7 @@ Csv/countriesByDay/
 Csv/productsByDay/
 test.sh
 beeline.txt
+.metals
+.vscode
+crontabs
+
