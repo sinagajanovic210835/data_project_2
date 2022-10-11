@@ -6,5 +6,5 @@ test.sh
 beeline.txt
 .metals
 .vscode
-crontabs
+crontabs/*
 

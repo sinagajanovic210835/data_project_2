@@ -1,2 +1,2 @@
-*/1	*	*	*	*	source /etc/environment && exec /shells/start.sh
+*/1	*	*	*	*	/shells/run1.sh
 

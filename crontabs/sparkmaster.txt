@@ -1,2 +1,2 @@
-*/20	*	*	*	*	/sparkapp/shell/job1.sh
+*/4	*	*	*	*	/sparkapp/shell/job1.sh
 
