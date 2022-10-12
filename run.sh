@@ -1,8 +1,7 @@
 #! /bin/bash
 
 PERIOD=$1
-MIN=$((PERIOD * 4))
-echo -e "*/$MIN\t*\t*\t*\t*\t/sparkapp/shell/job1.sh\n" > ./crontabs/sparkmaster.txt
+echo -e "*/1\t*\t*\t*\t*\t/sparkapp/shell/job1.sh\n" > ./crontabs/sparkmaster.txt
 docker-compose up --build & \
 sleep 20 && \
 docker cp ./corehdfs/core-site.xml spark-master:/spark/conf/
