@@ -72,12 +72,16 @@ services:
     command: /opt/hive/bin/hive --service metastore
     environment:
       SERVICE_PRECONDITION: "namenode:9870 datanode1:9864 datanode2:9864 datanode3:9864 hive-metastore-postgresql:5432"
+    volumes:
+      - hive-metastore:/var/lib/postgresql/data  
     ports:
       - "9083:9083"
   
   hive-metastore-postgresql:
     image: bde2020/hive-metastore-postgresql:2.3.0
     container_name: hive-metastore-postgresql
+    volumes:
+      - hive-metastore-postgresql:/var/lib/postgresql/data
 
   cloudera:
     image: gethue/hue:20201111-135001
@@ -107,7 +111,7 @@ services:
       - ./bool:/bool   
       - ./crontabs:/crontabs  
       - ./sparkdata:/sparkapp/
-    #   - ./driver/:/driver/
+      - ./driver/:/driver/
 
   spark-worker1:
     image: bde2020/spark-worker:3.0.1-hadoop3.2
@@ -131,11 +135,25 @@ services:
     ports:
       - 8082:8081
     env_file:
-      - ./hadoop-hive.env    
+      - ./hadoop-hive.env 
+      
+  postgres:
+    container_name: postgres
+    image: postgres:latest
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres       
   
 volumes:
   namenode: {}
   datanode1: {}
   datanode2: {}
   datanode3: {}
-  
+  postgres_data: {}
+  hive-metastore-postgresql: {}
+  hive-metastore: {}

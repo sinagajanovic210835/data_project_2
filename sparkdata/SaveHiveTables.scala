@@ -4,18 +4,17 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql._
 import java.io.File
 
-object SaveInvoices {
+object SaveHiveTables {
 
   def run():Unit = {
     
     Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
-
  
     val schemaProduct = StructType(
       Seq(
         StructField("StockCode", StringType, true),
         StructField("Description", StringType, true),
-        StructField("UnitPrice", DoubleType, true),
+        StructField("UnitPrice", DecimalType(10,2), true),
         StructField("Price_On_Date", StringType, true)      
       ))
 
@@ -40,7 +39,7 @@ object SaveInvoices {
     val spark =
       SparkSession
         .builder()
-        .appName("FeatureExtractor")
+        .appName("SaveHiveTables")
         .config("spark.master", "local")
         .enableHiveSupport()
         .getOrCreate();
@@ -66,8 +65,7 @@ object SaveInvoices {
             .option("delimiter", "|")
             .csv("hdfs://namenode:8020/user/test/products/")  
 
-            products.write.mode(SaveMode.Append).saveAsTable("products")
-       
+            products.write.mode(SaveMode.Append).saveAsTable("products")       
     }
 
     if(strng.equals("procntinv") || strng.equals("cntinv") || strng.equals("procnt") || strng.equals("cnt")) {
@@ -77,9 +75,8 @@ object SaveInvoices {
             .option("delimiter", "|")
             .csv("hdfs://namenode:8020/user/test/countries/")
 
-            countries.write.mode(SaveMode.Append).saveAsTable("countries")
-       
+            countries.write.mode(SaveMode.Append).saveAsTable("countries")       
     }  
   }
 }
-SaveInvoices.run()
+SaveHiveTables.run()
