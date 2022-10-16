@@ -20,7 +20,6 @@ with open("./Csv/products/products.csv") as file:
                 newFile = open(name, "w")
                 newFile.write(line1)
                 newFile.write(line.strip() + "\n")
-                print(name)
             elif date == tmpDate:
                 newFile.write(line.strip() + "\n")
             else:                

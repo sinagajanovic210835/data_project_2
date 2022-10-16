@@ -9,31 +9,7 @@ object SaveHiveTables {
   def run():Unit = {
     
     Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
- 
-    val schemaProduct = StructType(
-      Seq(
-        StructField("StockCode", StringType, true),
-        StructField("Description", StringType, true),
-        StructField("UnitPrice", DecimalType(10,2), true),
-        StructField("Price_On_Date", StringType, true)      
-      ))
 
-    val schemaCountry = StructType(
-      Seq(
-        StructField("CountryCode", StringType, true),
-        StructField("CountryName", StringType, true)       
-      ))
-
-    val schemaInvoice = StructType(
-      Seq(
-        StructField("InvoiceNo", StringType, true),
-        StructField("StockCode", StringType, true),
-        StructField("Quantity", IntegerType, true),
-        StructField("InvoiceDate", StringType, true),
-        StructField("CustomerID", StringType, true),
-        StructField("Country", StringType, true)
-      ))
-      
     val warehouseLocation = new File("spark-warehouse").getAbsolutePath
 
     val spark =
@@ -47,6 +23,30 @@ object SaveHiveTables {
     val args = sc.getConf.get("spark.driver.args").split("_")
     val strng = args(0)
     val direc = if (args.length > 1) args(1) else "" 
+
+     val schemaCountry = StructType(
+      Seq(
+        StructField("CountryCode", StringType, true),
+        StructField("CountryName", StringType, true)       
+      )) 
+
+      val schemaProduct = StructType(
+      Seq(
+        StructField("StockCode", StringType, true),
+        StructField("Description", StringType, true),
+        StructField("UnitPrice", DecimalType(10,2), true),
+        StructField("Price_On_Date", StringType, true)      
+      ))     
+ 
+    val schemaInvoice = StructType(
+      Seq(
+        StructField("InvoiceNo", StringType, true),
+        StructField("StockCode", StringType, true),
+        StructField("Quantity", IntegerType, true),
+        StructField("InvoiceDate", StringType, true),
+        StructField("CustomerID", StringType, true),
+        StructField("Country", StringType, true)
+      ))  
     
     if(strng.equals("procntinv") || strng.equals("proinv") || strng.equals("cntinv") || strng.equals("inv")) {      
         val invoices = spark
@@ -55,17 +55,7 @@ object SaveHiveTables {
             .option("delimiter", "|")
             .csv("hdfs://namenode:8020/user/test/invoices/" + direc + "/")  
 
-          invoices.write.mode(SaveMode.Append).saveAsTable("invoices")
-    }
-
-    if(strng.equals("procntinv") || strng.equals("proinv") || strng.equals("procnt") || strng.equals("pro")) {      
-        val products = spark
-            .read
-            .schema(schemaProduct)
-            .option("delimiter", "|")
-            .csv("hdfs://namenode:8020/user/test/products/")  
-
-            products.write.mode(SaveMode.Append).saveAsTable("products")       
+          invoices.write.mode(SaveMode.Append).saveAsTable("invoices")  
     }
 
     if(strng.equals("procntinv") || strng.equals("cntinv") || strng.equals("procnt") || strng.equals("cnt")) {
@@ -77,6 +67,16 @@ object SaveHiveTables {
 
             countries.write.mode(SaveMode.Append).saveAsTable("countries")       
     }  
+    
+    if(strng.equals("procntinv") || strng.equals("proinv") || strng.equals("procnt") || strng.equals("pro")) {      
+        val products = spark
+            .read
+            .schema(schemaProduct)
+            .option("delimiter", "|")
+            .csv("hdfs://namenode:8020/user/test/products/")  
+
+            products.write.mode(SaveMode.Append).saveAsTable("products")       
+    }
   }
 }
 SaveHiveTables.run()

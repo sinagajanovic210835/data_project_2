@@ -46,7 +46,7 @@ with open("./Csv/data/data.csv", 'rb') as file:
                 description = arr[2] + "," + arr[3] + "," + arr[4]
             newLine = invoiceNo + "|" + stockCode + "|" + arr[length - 5].strip() + "|" + arr[length - 4].strip() + "|" + userId + "|" + countryCode + "\n"
             newFile.write(newLine)
-            date = arr[length - 4].split(" ")[0].strip()
+            date = arr[length - 4].strip()
             if not (stockCode, date) in products.keys():
                 products[(stockCode, date)] = (description.strip(), arr[length - 3].strip())
             # print(arr)
