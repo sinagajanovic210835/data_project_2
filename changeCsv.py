@@ -33,17 +33,23 @@ with open("./Csv/data/data.csv", 'rb') as file:
             stockCode = arr[1].strip()
             if country == "Channel Islands":
                 countryCode = "1010-6"
+                country = "United Kingdom"
+                arr[length - 1] = "United Kingdom"
             else:
                 countryCode = countriesWithCode[country] + "-" + str(random.randint(1, 6))
+                
             if invoiceNo in invoiceNoWithCountryCodes.keys():
                 countryCode = invoiceNoWithCountryCodes[invoiceNo]
             else:
                 invoiceNoWithCountryCodes[invoiceNo] = countryCode
-            description = arr[2].strip()
-            if length == 9:
-                description = arr[2] + "," + arr[3]
-            elif length == 10:
-                description = arr[2] + "," + arr[3] + "," + arr[4]
+
+            if length == 10:
+                description = arr[2] + "," + arr[3] + "," + arr[4]               
+            elif length == 9:
+                 description = arr[2] + "," + arr[3]
+            else:
+                description = arr[2].strip()
+
             newLine = invoiceNo + "|" + stockCode + "|" + arr[length - 5].strip() + "|" + arr[length - 4].strip() + "|" + userId + "|" + countryCode + "\n"
             newFile.write(newLine)
             date = arr[length - 4].strip()

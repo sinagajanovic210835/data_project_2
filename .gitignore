@@ -7,4 +7,9 @@ beeline.txt
 .metals
 .vscode
 crontabs/*.*
+sparkdata/*/target
+sparkdata/*/project/target
+sparkdata/*/project/*.cache
+sparkdata/*/project/*.class
+sparkdata/*/project/project
 

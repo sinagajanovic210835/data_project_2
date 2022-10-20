@@ -141,19 +141,28 @@ services:
     container_name: postgres
     image: postgres:latest
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data2:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
-      - POSTGRES_DB=postgres       
+      - POSTGRES_DB=postgres      
+
+  # metabase:
+  #   image: metabase/metabase
+  #   container_name: metabase
+  #   volumes:  
+  #     - metabasedata:/metabase.db/
+  #   ports:
+  #     - "3000:3000" 
   
 volumes:
   namenode: {}
   datanode1: {}
   datanode2: {}
   datanode3: {}
-  postgres_data: {}
+  metabasedata: {}
+  postgres_data2: {}
   hive-metastore-postgresql: {}
   hive-metastore: {}

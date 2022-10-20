@@ -10,7 +10,7 @@ object SaveHiveTables {
     
     Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
 
-    val warehouseLocation = new File("spark-warehouse").getAbsolutePath
+    val warehouseLocation = new File("spark-warehouse").getAbsolutePath    
 
     val spark =
       SparkSession
@@ -20,9 +20,9 @@ object SaveHiveTables {
         .enableHiveSupport()
         .getOrCreate();
 
-    val args = sc.getConf.get("spark.driver.args").split("_")
-    val strng = args(0)
-    val direc = if (args.length > 1) args(1) else "" 
+    val args      = sc.getConf.get("spark.driver.args").split("_")
+    val command   = args(0)
+    val directory = if (args.length > 1) args(1) else "" 
 
      val schemaCountry = StructType(
       Seq(
@@ -47,18 +47,22 @@ object SaveHiveTables {
         StructField("CustomerID", StringType, true),
         StructField("Country", StringType, true)
       ))  
+
+    val setInvoices  = Set("procntinv", "proinv", "cntinv", "inv")
+    val setCountries = Set("procntinv", "cntinv", "procnt", "cnt")
+    val setProducts  = Set("procntinv", "proinv", "procnt", "pro")
     
-    if(strng.equals("procntinv") || strng.equals("proinv") || strng.equals("cntinv") || strng.equals("inv")) {      
+    if(setInvoices.contains(command)) {      
         val invoices = spark
             .read
             .schema(schemaInvoice)
             .option("delimiter", "|")
-            .csv("hdfs://namenode:8020/user/test/invoices/" + direc + "/")  
+            .csv("hdfs://namenode:8020/user/test/invoices/" + directory + "/")  
 
           invoices.write.mode(SaveMode.Append).saveAsTable("invoices")  
     }
 
-    if(strng.equals("procntinv") || strng.equals("cntinv") || strng.equals("procnt") || strng.equals("cnt")) {
+    if(setCountries.contains(command)) {
         val countries = spark
             .read
             .schema(schemaCountry)
@@ -68,7 +72,7 @@ object SaveHiveTables {
             countries.write.mode(SaveMode.Append).saveAsTable("countries")       
     }  
     
-    if(strng.equals("procntinv") || strng.equals("proinv") || strng.equals("procnt") || strng.equals("pro")) {      
+    if(setProducts.contains(command)) {      
         val products = spark
             .read
             .schema(schemaProduct)

@@ -1,6 +1,8 @@
 #! /bin/bash
 
-# python3 changeCsv.py && python3 scheduler.py && python3 productByDay.py && python3 countriesByDay.py && \
+python3 changeCsv.py && python3 scheduler.py && python3 productByDay.py && python3 countriesByDay.py && \
+# cd ./sparkdata/SaveToPostgres && sbt assembly && \
+# cd ../../
 PERIOD=$1
 echo -e "*/1\t*\t*\t*\t*\t/sparkapp/shell/job1.sh\n" > ./crontabs/sparkmaster.txt
 docker-compose up --build & \
