@@ -18,9 +18,13 @@ then
 fi
 TEST=$((PERIOD * 60))
 
+
+
+
+
+
 while [ $COUNTER -lt 2915 ]
 do
-BOOL=`cat /bool/bool.txt`
 MSG=
 MOD=5
     while [[ $MOD != 0 ]]
@@ -30,6 +34,12 @@ MOD=5
         sleep 1
     done
     
+    if [ $DIR -gt 1 ]
+    then
+        DELDIR=$((DIR - 1))
+        hdfs dfs -rm -r /user/test/invoices/$DELDIR
+    fi
+
     hdfs dfs -rm -r /user/test/products
     hdfs dfs -rm -r /user/test/countries
    

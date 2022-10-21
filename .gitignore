@@ -12,4 +12,5 @@ sparkdata/*/project/target
 sparkdata/*/project/*.cache
 sparkdata/*/project/*.class
 sparkdata/*/project/project
-
+bool/cnt.txt
+crontabs/namenode.txt

@@ -1,6 +1,6 @@
 #! /bin/bash
 
-python3 changeCsv.py && python3 scheduler.py && python3 productByDay.py && python3 countriesByDay.py && \
+# python3 changeCsv.py && python3 scheduler.py && python3 productByDay.py && python3 countriesByDay.py && \
 # cd ./sparkdata/SaveToPostgres && sbt assembly && \
 # cd ../../
 PERIOD=$1
