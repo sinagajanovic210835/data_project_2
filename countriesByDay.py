@@ -10,6 +10,7 @@ with open("./Csv/country/country.csv", "r") as file:
 with open("./Csv/invoices/invoices.csv") as file:
     newFile = open("./Csv/country/country.csv", "r")
     newFile.close()
+
     codesToWrite = set()
     recordededCodes = set()
     header = True
@@ -19,13 +20,16 @@ with open("./Csv/invoices/invoices.csv") as file:
 
     for line in file:        
         if line.strip() and not header:
+
             arr = line.strip().split("|")[3].split(" ")[0].split("/")
+
             date = arr[1] + "_" +arr[0] + "_" + arr[2]
             code = line.strip().split("|")[-1].split("-")[0]
             
             if newDate:
                 tmpDate = date
                 newDate = False
+
             if date == tmpDate:
                 if not code in recordededCodes:
                     codesToWrite.add(code)
@@ -36,8 +40,12 @@ with open("./Csv/invoices/invoices.csv") as file:
                     newFile = open(name, "w")                    
                     for ccd in codesToWrite:
                         newFile.write(ccd + "|" + countriesWithCode[ccd] + "\n")
-                    newFile.close
-                    codesToWrite = set()
+                    newFile.close                    
+                    if not code in recordededCodes:
+                        codesToWrite = set(code)
+                        recordededCodes.add(code)
+                    else: 
+                        codesToWrite = set()
                 tmpDate = date         
 
         header = False   
