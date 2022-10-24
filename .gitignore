@@ -1,7 +1,10 @@
 sina.txt
 Csv/invoicesByHour
-Csv/countriesByDay/
-Csv/productsByDay/
+Csv/countriesByDay
+Csv/productsByDay
+Csv/invoices
+Csv/users
+Csv/products
 test.sh
 beeline.txt
 .metals
