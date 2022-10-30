@@ -3,6 +3,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql._
 import java.io.File
+import scala.util.{Failure, Success, Try}
 
 object SaveHiveTables {
 
@@ -12,14 +13,7 @@ object SaveHiveTables {
 
     val warehouseLocation = new File("spark-warehouse").getAbsolutePath    
 
-    val spark =
-      SparkSession
-        .builder()
-        .appName("SaveHiveTables")
-        .config("spark.master", "local")
-        .enableHiveSupport()
-        .getOrCreate();
-
+    
     val args      = sc.getConf.get("spark.driver.args").split("_")
     val command   = args(0)
     val directory = if (args.length > 1) args(1) else "" 
@@ -48,21 +42,13 @@ object SaveHiveTables {
         StructField("Country", StringType, true)
       ))  
 
-    val setInvoices  = Set("procntinv", "proinv", "cntinv", "inv")
-    val setCountries = Set("procntinv", "cntinv", "procnt", "cnt")
-    val setProducts  = Set("procntinv", "proinv", "procnt", "pro")
+    val setInvoices  = Set("productcountryinvoice", "productinvoice", "countryinvoice", "invoice")
+    val setCountries = Set("productcountryinvoice", "countryinvoice", "productcountry", "country")  
+    val setProducts  = Set("productcountryinvoice", "productinvoice", "productcountry", "product")
     
-    if(setInvoices.contains(command)) {      
-        val invoices = spark
-            .read
-            .schema(schemaInvoice)
-            .option("delimiter", "|")
-            .csv("hdfs://namenode:8020/user/test/invoices/" + directory + "/")  
+    val success = Try[Unit]{
 
-          invoices.write.mode(SaveMode.Append).saveAsTable("invoices")  
-    }
-
-    if(setCountries.contains(command)) {
+     if(setCountries.contains(command)) {
         val countries = spark
             .read
             .schema(schemaCountry)
@@ -81,6 +67,26 @@ object SaveHiveTables {
 
             products.write.mode(SaveMode.Append).saveAsTable("products")       
     }
+    
+    if(setInvoices.contains(command)) {      
+        val invoices = spark
+            .read
+            .schema(schemaInvoice)
+            .option("delimiter", "|")
+            .csv("hdfs://namenode:8020/user/test/invoices/" + directory)
+
+          invoices.write.mode(SaveMode.Overwrite).saveAsTable("invoices")  
+    }
+    }
+    success match {
+
+          case Success(_)   => println("Job Succeeded")
+
+          case Failure(e)   => e.printStackTrace()
+                                 println("\nTRALALALALALA!!!!!!!!!!!!!!!!")
+
+   }
+   
   }
 }
 SaveHiveTables.run()

@@ -15,5 +15,7 @@ sparkdata/*/project/target
 sparkdata/*/project/*.cache
 sparkdata/*/project/*.class
 sparkdata/*/project/project
+bool/bool.txt
 bool/cnt.txt
 crontabs/namenode.txt
+sparkdata/SavePostgres/target

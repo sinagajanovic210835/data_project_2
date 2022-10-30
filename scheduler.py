@@ -27,7 +27,7 @@ with open("./Csv/invoices/invoices.csv") as invoices:
             if first:                                 
                 cnt += 1
                 start = hr                     
-                name = "./Csv/invoicesByHour/" + str(cnt) + "__" + str(start) + "__" + str(start + 1) + "_00__" + str(day)  + "_" + str(mnth) + "_" + str(yr) + ".csv"
+                name = "./Csv/invoicesByHour/"+ str(start) + "_" + str(start + 1) + "_" + str(day)  + "_" + str(mnth) + "_" + str(yr) + ".csv"
                 newFile = open(name, "w") 
                 newFile.write(firstLine)
                 first = False
