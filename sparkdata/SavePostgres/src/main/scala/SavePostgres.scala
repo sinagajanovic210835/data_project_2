@@ -17,31 +17,6 @@ object SavePostgres  extends App {
 
   Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
 
-
-  val host = "smtp.gmail.com"
-  val props = new Properties
-  props.put("mail.smtp.auth", "true")
-  props.put("mail.smtp.ssl.enable", "true")
-  props.put("mail.smtp.host", host)
-  props.put("mail.smtp.port", "465")
-
-  def messageText(r:Row) = {
-    val text = s"Invoice No: ${r(0).toString}\nStock Code: ${r(1).toString}\nInvoice Date: ${r(2).toString}\nCustomer ID: ${r(3).toString}\n" +
-                s"Description: ${r(4).toString}\nUnit Price: ${r(5).toString}\nCountry Name: ${r(6).toString}\nRegion: ${r(7).toString}\nMedian: ${r(8).toString}\n" +
-                s"Standard Deviation: ${r(9).toString}\nQuantity Ordered: ${r(10).toString}\nAlarm: ${r(11).toString}"
-
-          val session = Session.getInstance(props, new jakarta.mail.Authenticator() {
-            override protected def getPasswordAuthentication = new PasswordAuthentication("sinagajanovic", "zzqitezvxpyviisw")
-          })
-          val message = new MimeMessage(session)
-          message.setFrom(new InternetAddress("sinagajanovic@gmail.com"))
-          message.setRecipient(Message.RecipientType.TO, new InternetAddress("sinagajanovic@gmail.com"))
-          message.setSubject("Order over two standard deviations over median")
-          message.setText(text)
-          Transport.send(message)
-        }
-
-
   val db = Map("user" -> "postgres",
     "password" -> "postgres",
     "driver" -> "org.postgresql.Driver",
@@ -123,17 +98,17 @@ object SavePostgres  extends App {
       val invoices  = spark.read.parquet("hdfs://namenode:8020/user/hive/warehouse/invoices/").map(mapFuncInvoice)(invoiceEncoder)
 
       val invoicesProductsCountriesHive = invoices.as("invoices")
-        .join(products.as("products"),
-          col("invoices.InvoiceDate") === col("products.Price_On_Date") &&
-            col("invoices.StockCode") === col("products.StockCode"), "left")
-        .withColumn("total", col("invoices.Quantity") * col("products.UnitPrice"))
-        .drop(col("products.StockCode"))
-        .alias("inv_prod")
-        .filter(col("CustomerId").isNotNull && col("total").isNotNull)
-        .join(countries.as("countries"),
-          col("inv_prod.Country") === col("countries.CountryCode"), "left")
-        .drop("Price_On_Date", "Country")
-        .orderBy("InvoiceDate")
+                                .join(products.as("products"),
+                                  col("invoices.InvoiceDate") === col("products.Price_On_Date") &&
+                                    col("invoices.StockCode") === col("products.StockCode"), "left")
+                                .withColumn("total", col("invoices.Quantity") * col("products.UnitPrice"))
+                                .drop(col("products.StockCode"))
+                                .alias("inv_prod")
+                                .filter(col("CustomerId").isNotNull && col("total").isNotNull)
+                                .join(countries.as("countries"),
+                                  col("inv_prod.Country") === col("countries.CountryCode"), "left")
+                                .drop("Price_On_Date", "Country")
+                                .orderBy("InvoiceDate")
 
   val succes = Try[Unit] {
 
@@ -167,28 +142,56 @@ object SavePostgres  extends App {
     }
 
     val invoicesMedianAlarm = invoicesProductsCountriesPostgres
-      .filter("Quantity > 0")
-      .select("StockCode", "Quantity")
-      .groupBy("StockCode")
-      .agg(sort_array(collect_list("Quantity")))
-      .map(mapFunctionMedian)(decoderMedian)
+                              .filter("Quantity > 0")
+                              .select("StockCode", "Quantity")
+                              .groupBy("StockCode")
+                              .agg(sort_array(collect_list("Quantity")))
+                              .map(mapFunctionMedian)(decoderMedian)
 
-    val joined = invoicesProductsCountriesHive.as("invoices")
-      .join(invoicesMedianAlarm.as("alarm"),
-        col("invoices.StockCode") === col("alarm.StockCode"), "inner")
-      .filter(col("invoices.Quantity") >= col("alarm.Alarm") && col("alarm.StandardDev" ) =!= 0.0)
-      .select("InvoiceNo", "invoices.StockCode", "InvoiceDate", "CustomerID", "Description", 
-              "UnitPrice", "CountryName", "Region","Median", "StandardDev", "Quantity", "Alarm")
-      .collect()
+    val invoicesForAlarm = invoicesProductsCountriesHive.as("invoices")
+                              .join(invoicesMedianAlarm.as("alarm"),
+                                col("invoices.StockCode") === col("alarm.StockCode"), "inner")
+                              .filter(col("invoices.Quantity") >= col("alarm.Alarm") && col("alarm.StandardDev" ) =!= 0.0)
+                              .select("InvoiceNo", "invoices.StockCode", "InvoiceDate", "CustomerID", "Description", 
+                                      "UnitPrice", "CountryName", "Region","Median", "StandardDev", "Quantity", "Alarm")
+                              .collect()
 
-      joined.foreach(r => messageText(r))
+    val text = new mutable.StringBuilder("______________________________________________\n")
+  
+    invoicesForAlarm.foreach(r => {
+                val rw = s"Invoice No: ${r(0).toString}\nStock Code: ${r(1).toString}\nInvoice Date: ${r(2).toString}\nCustomer ID: ${r(3).toString}\n" +
+                         s"Description: ${r(4).toString}\nUnit Price: ${r(5).toString}\nCountry Name: ${r(6).toString}\nRegion: ${r(7).toString}\n" +
+                         s"Median: ${r(8).toString}\nStandard Deviation: ${r(9).toString}\nQuantity Ordered: ${r(10).toString}\nAlarm: ${r(11).toString}\n"
+                text.append(rw + "______________________________________________\n")
+              })
 
+    if (!text.toString.equals("______________________________________________\n")){
 
+          val host = "smtp.gmail.com"
+          val props = new Properties
+          props.put("mail.smtp.auth", "true")
+          props.put("mail.smtp.ssl.enable", "true")
+          props.put("mail.smtp.host", host)
+          props.put("mail.smtp.port", "465")  
+          
+          val session = Session.getInstance(props, new jakarta.mail.Authenticator() {
+                          override protected def getPasswordAuthentication = new PasswordAuthentication("sinagajanovicanother", "kggjlmfgnvwdhrlr")
+                        })
 
+          val message = new MimeMessage(session)    
+          message.setFrom(new InternetAddress("sinagajanovicanother@gmail.com"))         
+          message.setRecipients(Message.RecipientType.TO, "sinagajanovicanother@gmail.com,sinagajanovic@gmail.com")
+          message.setSubject("Orders greater than two standard deviations above the median")
+          message.setText(text.toString)
+          Transport.send(message)  
+          
+    }
   }
   succes match{
+
     case Failure(exception) => exception.printStackTrace()
     case Success(_)         => println("SUCCESS")
+    
   }
 
   invoicesProductsCountriesHive.write

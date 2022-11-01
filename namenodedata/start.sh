@@ -8,10 +8,10 @@ MESSAGE=
 PERIOD=$1
 TEST=$((PERIOD * 60))
 
-# hdfs dfs -mkdir /user/test/invoices
-# sleep 5
-# hdfs dfs -mkdir /user/test/invoices/1
-# sleep 5
+hdfs dfs -mkdir /user/test/invoices
+sleep 5
+hdfs dfs -mkdir /user/test/invoices/1
+sleep 5
 
 for YEAR in 2010 2011; do
     for MONTH in 12 1 2 3 4 5 6 7 8 9 10 11; do
@@ -25,14 +25,14 @@ for YEAR in 2010 2011; do
             if [[ $FILEPRO != "" ]]; then               
                 hdfs dfs -mkdir /user/test/products/
                 hdfs dfs -appendToFile /data1/products/$FILEPRO /user/test/products/products.csv
-                rm /data1/products/$FILEPRO
+                # rm /data1/products/$FILEPRO
                 MESSAGE+=product  
                 echo $MESSAGE              
             fi            
             if [[ $FILECNT != "" ]]; then               
                 hdfs dfs -mkdir /user/test/countries/
                 hdfs dfs -appendToFile /data1/countries/$FILECNT /user/test/countries/countries.csv
-                rm /data1/countries/$FILECNT
+                # rm /data1/countries/$FILECNT
                 MESSAGE+=country
                 echo $MESSAGE               
             fi                  
@@ -44,7 +44,7 @@ for YEAR in 2010 2011; do
                 FILEINV=`ls /data1/invoices/ | grep -w $INVOICE`
                 if [[ $FILEINV != "" ]]; then               
                     hdfs dfs -appendToFile /data1/invoices/$FILEINV /user/test/invoices/$DIR/invoice.csv
-                    rm /data1/invoices/$FILEINV
+                    # rm /data1/invoices/$FILEINV
                 fi
                 if [ `expr $END % 4` -eq 0 ]; then                   
                     OLDDIR=$((DIR - 1))
