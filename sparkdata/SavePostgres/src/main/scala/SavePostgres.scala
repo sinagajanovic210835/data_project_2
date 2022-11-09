@@ -15,19 +15,14 @@ import scala.util.{Failure, Success, Try}
 
 object SavePostgres  extends App {
 
-  Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
+  Logger.getLogger("org.apache.spark").setLevel(Level.WARN) 
 
-  val db = Map("user" -> "postgres",
-    "password" -> "postgres",
-    "driver" -> "org.postgresql.Driver",
-    "url" -> "jdbc:postgresql://postgres:5432/postgres",
-  )
-    val ISOcodes = Map("Norway" -> "NOR", "Netherlands" -> "NLD", "France" -> "FRA", "Germany" -> "DEU", "Australia" -> "AUS", "United Kingdom" -> "GBR",
-      "Ireland" -> "IRL", "Italy" -> "ITA", "Switzerland" -> "CHE", "Portugal" -> "PRT", "Spain" -> "ESP", "Belgium" -> "BEL", "Poland" -> "POL",
-      "Japan" -> "JPN", "Lithuania" -> "LTU", "Iceland" -> "ISL", "Malta" -> "MLT", "Denmark" -> "DNK", "Unspecified" -> "", "RSA" -> "ZAF",
-      "United Arab Emirates" -> "ARE", "Canada" -> "CAN", "Cyprus" -> "CYP", "Channel Islands" -> "GBR", "Brazil" -> "BRA", "Israel" -> "ISR",
-      "Austria" -> "AUT", "Finland" -> "FIN", "USA" -> "USA", "Bahrain" -> "BHR", "Greece" -> "GRC", "Hong Kong" -> "HKG", "Saudi Arabia" -> "SAU",
-      "Singapore" -> "SGP", "European Community" -> "", "Lebanon" -> "LBN", "Czech Republic" -> "CZE", "Sweden" -> "SWE")
+    val ISOcodes = Map("Norway" -> "NO", "Netherlands" -> "NL", "France" -> "FR", "Germany" -> "DE", "Australia" -> "AU", "United Kingdom" -> "GB",
+      "Ireland" -> "IE", "Italy" -> "IT", "Switzerland" -> "CH", "Portugal" -> "PT", "Spain" -> "ES", "Belgium" -> "BE", "Poland" -> "PL",
+      "Japan" -> "JP", "Lithuania" -> "LT", "Iceland" -> "IS", "Malta" -> "MT", "Denmark" -> "DK", "Unspecified" -> "", "RSA" -> "ZA",
+      "United Arab Emirates" -> "AE", "Canada" -> "CA", "Cyprus" -> "CY", "Channel Islands" -> "GB", "Brazil" -> "BR", "Israel" -> "IL",
+      "Austria" -> "AT", "Finland" -> "FI", "USA" -> "US", "Bahrain" -> "BH", "Greece" -> "GR", "Hong Kong" -> "HK", "Saudi Arabia" -> "SA",
+      "Singapore" -> "SG", "European Community" -> "", "Lebanon" -> "LB", "Czech Republic" -> "CZ", "Sweden" -> "SE")
 
      val spark =
        SparkSession
@@ -78,7 +73,9 @@ object SavePostgres  extends App {
     }
 
     def mapFuncCountry(r: Row): Row = Row(r(0), r(1), ISOcodes(r(1).toString))
+
     def mapFuncProduct(r: Row): Row = Row(r(0), r(1), r(2), convertTime(r(3).toString))
+
     def mapFuncInvoice(r: Row): Row = {
       val regions = Map[String, String](
         "1" -> "North",
@@ -91,6 +88,15 @@ object SavePostgres  extends App {
       Row(r(0), r(1), r(2), convertTime(r(3).toString), r(4), country_region(0), regions(country_region(1)))
     }
 
+    val db = Map(
+                "user"      -> "postgres",
+                "password"  -> "postgres",
+                "driver"    -> "org.postgresql.Driver",
+                "url"       -> "jdbc:postgresql://postgres:5432/postgres",
+              )
+
+    val success = Try[Unit] {
+
       val products  = spark.read.parquet("hdfs://namenode:8020/user/hive/warehouse/products/").map(mapFuncProduct)(productEncoder)
 
       val countries = spark.read.parquet("hdfs://namenode:8020/user/hive/warehouse/countries/").map(mapFuncCountry)(countryEncoder)
@@ -98,76 +104,81 @@ object SavePostgres  extends App {
       val invoices  = spark.read.parquet("hdfs://namenode:8020/user/hive/warehouse/invoices/").map(mapFuncInvoice)(invoiceEncoder)
 
       val invoicesProductsCountriesHive = invoices.as("invoices")
-                                .join(products.as("products"),
-                                  col("invoices.InvoiceDate") === col("products.Price_On_Date") &&
-                                    col("invoices.StockCode") === col("products.StockCode"), "left")
-                                .withColumn("total", col("invoices.Quantity") * col("products.UnitPrice"))
-                                .drop(col("products.StockCode"))
-                                .alias("inv_prod")
-                                .filter(col("CustomerId").isNotNull && col("total").isNotNull)
-                                .join(countries.as("countries"),
-                                  col("inv_prod.Country") === col("countries.CountryCode"), "left")
-                                .drop("Price_On_Date", "Country")
-                                .orderBy("InvoiceDate")
+                                                  .join(products.as("products"),
+                                                    col("invoices.InvoiceDate") === col("products.Price_On_Date") &&
+                                                    col("invoices.StockCode") === col("products.StockCode"), "left")
+                                                  .withColumn("total", col("invoices.Quantity") * col("products.UnitPrice"))
+                                                  .drop(col("products.StockCode"))
+                                                  .alias("inv_prod")
+                                                  .filter(col("CustomerId").isNotNull && col("total").isNotNull && col("total") =!= 0.0)
+                                                  .join(countries.as("countries"),
+                                                    col("inv_prod.Country") === col("countries.CountryCode"), "left")
+                                                  .drop("Price_On_Date", "Country")
+                                                  .orderBy("InvoiceDate")
+                                                  .persist() 
 
-  val succes = Try[Unit] {
-
-    val invoicesProductsCountriesPostgres = spark.read.format("jdbc").options(db + ("dbtable" -> "invoices_products_countries")).load()
+    val invoicesProductsCountriesPostgres = spark.read
+                                            .format("jdbc")
+                                            .options(db + ("dbtable" -> "invoices_products_countries"))
+                                            .load()
 
     val schemaMedianDev = StructType(
       Seq(
         StructField("StockCode", StringType, true),
+        StructField("Average", DoubleType, true),
         StructField("Median", DoubleType, true),
         StructField("StandardDev", DoubleType, true),
-        StructField("Alarm", IntegerType, true)
+        StructField("Alarm", DoubleType, true)
       ))
 
     val decoderMedian = RowEncoder(schemaMedianDev)
 
     def mapFunctionMedian(r: Row): Row = {
       val arr = r(1).asInstanceOf[mutable.WrappedArray[Int]]
-      val (m, d) = findMedianDeviation(arr)
-      Row(r(0), m, d, (m + 2 * d).toInt + 1)
+      val (avg, med, dev) = findMedianDeviation(arr)
+      val alarm = med + 2 * dev
+      Row(r(0), avg, med, dev, alarm)
     }
 
-    def findMedianDeviation(arr: mutable.WrappedArray[Int]): (Double, Double) = {
-      val length = arr.length
-      if (length > 0) {
-        val avg = arr.sum.toDouble / length
-        val med = if (length % 2 != 0) arr(length / 2).toDouble else (arr(length / 2 - 1).toDouble + arr(length / 2).toDouble) / 2
-        val dev = math.sqrt(arr.foldLeft(0.0)((b, el) => b + (el - avg) * (el - avg)) / length)
-        (med, dev)
+    def findMedianDeviation(arr: mutable.WrappedArray[Int]): (Double, Double, Double) = {      
+        val length = arr.length
+        if (length > 1) {
+          val avg = arr.sum.toDouble / length
+          val med = if (length % 2 != 0) arr(length / 2).toDouble else (arr(length / 2 - 1).toDouble + arr(length / 2).toDouble) / 2
+          val dev = math.sqrt(arr.foldLeft(0.0)((b, el) => b + ((el - avg) * (el - avg)) / (length - 1)))
+          (avg, med, dev)
       }
-      else (0, 0)
+      else if (length == 1) (arr(0), arr(0), 0)
+      else (0, 0, 0)
     }
 
-    val invoicesMedianAlarm = invoicesProductsCountriesPostgres
-                              .filter("Quantity > 0")
-                              .select("StockCode", "Quantity")
-                              .groupBy("StockCode")
-                              .agg(sort_array(collect_list("Quantity")))
-                              .map(mapFunctionMedian)(decoderMedian)
+    val invoicesMedianDeviationAlarm = invoicesProductsCountriesPostgres
+                                      .filter("Quantity > 0")
+                                      .select("StockCode", "Quantity")
+                                      .groupBy("StockCode")
+                                      .agg(sort_array(collect_list("Quantity")))
+                                      .map(mapFunctionMedian)(decoderMedian)
 
     val invoicesForAlarm = invoicesProductsCountriesHive.as("invoices")
-                              .join(invoicesMedianAlarm.as("alarm"),
-                                col("invoices.StockCode") === col("alarm.StockCode"), "inner")
-                              .filter(col("invoices.Quantity") >= col("alarm.Alarm") && col("alarm.StandardDev" ) =!= 0.0)
-                              .select("InvoiceNo", "invoices.StockCode", "InvoiceDate", "CustomerID", "Description", 
-                                      "UnitPrice", "CountryName", "Region","Median", "StandardDev", "Quantity", "Alarm")
-                              .collect()
+                           .join(invoicesMedianDeviationAlarm.as("alarm"),
+                            col("invoices.StockCode") === col("alarm.StockCode"), "inner")
+                           .filter(col("invoices.Quantity") > col("alarm.Alarm") && col("alarm.StandardDev" ) =!= 0.0)
+                           .select("InvoiceNo", "invoices.StockCode", "InvoiceDate", "CustomerID", "Description", 
+                                   "UnitPrice", "CountryName", "Region", "Average", "Median", "StandardDev", "Quantity", "Alarm")
+                           .collect()
 
     val text = new mutable.StringBuilder("______________________________________________\n")
   
     invoicesForAlarm.foreach(r => {
-                val rw = s"Invoice No: ${r(0).toString}\nStock Code: ${r(1).toString}\nInvoice Date: ${r(2).toString}\nCustomer ID: ${r(3).toString}\n" +
-                         s"Description: ${r(4).toString}\nUnit Price: ${r(5).toString}\nCountry Name: ${r(6).toString}\nRegion: ${r(7).toString}\n" +
-                         s"Median: ${r(8).toString}\nStandard Deviation: ${r(9).toString}\nQuantity Ordered: ${r(10).toString}\nAlarm: ${r(11).toString}\n"
+                val rw = s"Customer ID: ${r(3).toString}\nInvoice No: ${r(0).toString}\nStock Code: ${r(1).toString}\nInvoice DateTime: ${r(2).toString}\n" +
+                         s"Product Description: ${r(4).toString}\nUnit Price: ${r(5).toString}\nCountry: ${r(6).toString}\nRegion: ${r(7).toString}\n" +
+                         s"Average: ${r(8).toString}\nMedian: ${r(9).toString}\nStandard Deviation: ${r(10).toString}\nQuantity Ordered: ${r(11).toString}\nAlarm: ${r(12).toString}\n"
                 text.append(rw + "______________________________________________\n")
               })
 
     if (!text.toString.equals("______________________________________________\n")){
 
-          val host = "smtp.gmail.com"
+          val host  = "smtp.gmail.com"
           val props = new Properties
           props.put("mail.smtp.auth", "true")
           props.put("mail.smtp.ssl.enable", "true")
@@ -183,21 +194,22 @@ object SavePostgres  extends App {
           message.setRecipients(Message.RecipientType.TO, "sinagajanovicanother@gmail.com,sinagajanovic@gmail.com")
           message.setSubject("Orders greater than two standard deviations above the median")
           message.setText(text.toString)
-          Transport.send(message)  
-          
+          Transport.send(message)            
     }
   }
-  succes match{
+
+  success match {
 
     case Failure(exception) => exception.printStackTrace()
-    case Success(_)         => println("SUCCESS")
+    case Success(_)         => println("SUCCESS!!!!!!!!!!!")
     
   }
 
   invoicesProductsCountriesHive.write
-    .format("jdbc")
-    .options(db + ("dbtable" -> "invoices_products_countries"))
-    .mode(SaveMode.Append)
-    .save()
+                                .format("jdbc")
+                                .options(db + ("dbtable" -> "invoices_products_countries"))
+                                .mode(SaveMode.Append)
+                                .save()
+    
   }
 

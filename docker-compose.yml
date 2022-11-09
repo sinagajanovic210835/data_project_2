@@ -149,13 +149,13 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_DB=postgres      
 
-  # metabase:
-  #   image: metabase/metabase
-  #   container_name: metabase
-  #   volumes:  
-  #     - metabasedata:/metabase.db/
-  #   ports:
-  #     - "3000:3000" 
+  metabase:
+    image: metabase/metabase
+    container_name: metabase
+    volumes:  
+      - metabasedata:/metabase.db/
+    ports:
+      - "3000:3000" 
   
 volumes:
   namenode: {}
