@@ -95,14 +95,23 @@ while [ `expr $YEAR` -lt 2012 ]; do
                 fi  
 
                 echo '.......'$MESSAGE'................'$INVOICE  > /bool/inf.txt
-                echo $MESSAGE > /bool/bool.txt                        
+                echo "export MESSAGE=$MESSAGE" > /bool/bool.txt                   
                 MESSAGE=   
                 HOUR=$((HOUR + 1))                 
                 echo "HOUR=$HOUR" > /bool/vars.txt   
                 echo "MONTH=$MONTH" >> /bool/vars.txt
                 echo "YEAR=$YEAR" >> /bool/vars.txt
                 echo "DAY=$DAY" >> /bool/vars.txt 
-                echo "DIR=$DIR" >> /bool/vars.txt                 
+                echo "DIR=$DIR" >> /bool/vars.txt 
+                ######### for twitter ###########################
+                if [ `expr $HOUR` -eq 3 ]; then
+                    echo "export TWITTER=3" >> /bool/bool.txt   
+                elif [ `expr $HOUR` -eq 5 ]; then
+                    echo "export TWITTER=5" >> /bool/bool.txt
+                else
+                    echo "export TWITTER=0" >> /bool/bool.txt
+                fi    
+                #################################################            
                 ######################################################################################             
             done
             HOUR=1

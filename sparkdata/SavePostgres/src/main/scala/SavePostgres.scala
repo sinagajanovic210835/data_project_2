@@ -95,15 +95,13 @@ object SavePostgres  extends App {
                 "url"       -> "jdbc:postgresql://postgres:5432/postgres",
               )
 
-    val success = Try[Unit] {
+     val products  = spark.read.parquet("hdfs://namenode:8020/user/hive/warehouse/products/").map(mapFuncProduct)(productEncoder)
 
-      val products  = spark.read.parquet("hdfs://namenode:8020/user/hive/warehouse/products/").map(mapFuncProduct)(productEncoder)
+     val countries = spark.read.parquet("hdfs://namenode:8020/user/hive/warehouse/countries/").map(mapFuncCountry)(countryEncoder)
 
-      val countries = spark.read.parquet("hdfs://namenode:8020/user/hive/warehouse/countries/").map(mapFuncCountry)(countryEncoder)
+     val invoices  = spark.read.parquet("hdfs://namenode:8020/user/hive/warehouse/invoices/").map(mapFuncInvoice)(invoiceEncoder)
 
-      val invoices  = spark.read.parquet("hdfs://namenode:8020/user/hive/warehouse/invoices/").map(mapFuncInvoice)(invoiceEncoder)
-
-      val invoicesProductsCountriesHive = invoices.as("invoices")
+     val invoicesProductsCountriesHive = invoices.as("invoices")
                                                   .join(products.as("products"),
                                                     col("invoices.InvoiceDate") === col("products.Price_On_Date") &&
                                                     col("invoices.StockCode") === col("products.StockCode"), "left")
@@ -117,10 +115,20 @@ object SavePostgres  extends App {
                                                   .orderBy("InvoiceDate")
                                                   .persist() 
 
+    val success = Try[Unit] {
+     
+    
     val invoicesProductsCountriesPostgres = spark.read
                                             .format("jdbc")
                                             .options(db + ("dbtable" -> "invoices_products_countries"))
                                             .load()
+
+    invoicesProductsCountriesHive.write
+                                .format("jdbc")
+                                .options(db + ("dbtable" -> "invoices_products_countries"))
+                                .mode(SaveMode.Append)
+                                .save()
+    
 
     val schemaMedianDev = StructType(
       Seq(
@@ -196,20 +204,20 @@ object SavePostgres  extends App {
           message.setText(text.toString)
           Transport.send(message)            
     }
+    
   }
 
   success match {
 
     case Failure(exception) => exception.printStackTrace()
-    case Success(_)         => println("SUCCESS!!!!!!!!!!!")
-    
-  }
-
-  invoicesProductsCountriesHive.write
+                                invoicesProductsCountriesHive.write
                                 .format("jdbc")
                                 .options(db + ("dbtable" -> "invoices_products_countries"))
                                 .mode(SaveMode.Append)
                                 .save()
+    case Success(_)         => println("SUCCESS!!!!!!!!!!!")
+    
+  } 
     
   }
-
+  
