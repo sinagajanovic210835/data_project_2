@@ -105,7 +105,7 @@ services:
       - 8043:8042     
     environment:
       - PYSPARK_PYTHON=python3
-      - BEARER_TOKEN=AAAAAAAAAAAAAAAAAAAAADMQeAEAAAAAqg8li4EedH9xlwQODgtq8BMppjY%3DaWvQeHVBe6PKH8JMWGcMHmYebyfJNc6ZdWeuXYtcw576JksAGi
+      - BEARER_TOKEN=AAAAAAAAAAAAAAAAAAAAADMQeAEAAAAA353NplcWMG4tpm42hsVGasDHARI%3D8IO7BH1Z4T1KHf5fS94E7xkNpEEVfvHGGliJMZ7Lt41Syic5pg
     env_file:
       - ./hadoop-hive.env
     volumes:

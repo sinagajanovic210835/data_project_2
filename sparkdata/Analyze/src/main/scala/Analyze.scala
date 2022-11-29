@@ -16,9 +16,9 @@ object Analyze  extends App {
                "password" -> "postgres",
                "driver"   -> "org.postgresql.Driver",
                "url"      -> "jdbc:postgresql://postgres:5432/postgres",
-  )
+              )
 
-    val spark =
+  val spark =
        SparkSession
          .builder
          .appName("Analyze")
@@ -43,9 +43,8 @@ object Analyze  extends App {
                       .schema(twitterSchema)
                       .load("file:///bool/entities.csv")
                       .map(r => Row(r(0).toString.toUpperCase))(twEncoder)
-                      .groupBy("word").count.as("count")
-                      .orderBy(col("count").desc)
-                      .cache()
+                      .groupBy("word")
+                      .count                                        
 
     val invoicesProductsCountries = spark.read.format("jdbc").options(db + ("dbtable" -> "invoices_products_countries")).load
 
@@ -53,7 +52,7 @@ object Analyze  extends App {
 
     val dc = RowEncoder(sc)
 
-      val words = invoicesProductsCountries.map(mapFunc)(dc)
+    val words = invoicesProductsCountries.map(mapFunc)(dc)
 
     val twsc = StructType(
       Seq(
@@ -78,24 +77,22 @@ object Analyze  extends App {
       .orderBy(col("count").desc, col("word"))
       .map(mapFunction)(twitterEncoder)
 
-    joinedTwitterProducts.show(200, false)
-
     twitterTags.write
           .format("jdbc")
           .options(db + ("dbtable" -> "twitter_hashtag_count"))
           .mode(SaveMode.Overwrite)
-          .save()
+          .save
 
     joinedTwitterProducts.write
       .format("jdbc")
       .options(db + ("dbtable" -> "twitter_hashtags_matching_products"))
       .mode(SaveMode.Overwrite)
-      .save()
+      .save
 
     }
+
     success match {
       case Success(_)         => println("Job Succeeded")
-      case Failure(exception) => exception.printStackTrace
-                                 println("\nTRALALALALALA!!!!!!!!!!!!!!!!")
+      case Failure(exception) => exception.printStackTrace                                
     }
 }
