@@ -97,6 +97,14 @@ object SavePostgres  extends App {
                 "url"       -> "jdbc:postgresql://postgres:5432/postgres",
               )
 
+    def saveDb(df:DataFrame) = {
+        df.write
+        .format("jdbc")
+        .options(db + ("dbtable" -> "invoices_products_countries"))
+        .mode(SaveMode.Append)
+        .save()
+    }
+
     val products  = spark.read.parquet("hdfs://namenode:8020/user/hive/warehouse/products/").map(mapFuncProduct)(productEncoder)
 
     val countries = spark.read.parquet("hdfs://namenode:8020/user/hive/warehouse/countries/").map(mapFuncCountry)(countryEncoder)
@@ -198,19 +206,13 @@ object SavePostgres  extends App {
               message.setText(text.toString)
               Transport.send(message)            
       } 
-      invoicesProductsCountriesHive.write
-                                    .format("jdbc")
-                                    .options(db + ("dbtable" -> "invoices_products_countries"))
-                                    .mode(SaveMode.Append)
-                                    .save() 
+
+      saveDb(invoicesProductsCountriesHive)
     }
+    
     success match {
             case Failure(exception) => exception.printStackTrace() 
-                                        invoicesProductsCountriesHive.write
-                                        .format("jdbc")
-                                        .options(db + ("dbtable" -> "invoices_products_countries"))
-                                        .mode(SaveMode.Append)
-                                        .save() 
+                                       saveDb(invoicesProductsCountriesHive) 
 
             case Success(_)         => println("SUCCESS!!!!!!!!!!!")    
   } 
